@@ -1,2 +1,2 @@
-export { default as ItemList } from './ItemList';
-export { default as ItemEdit } from './ItemEdit';
+export { default as BikeList } from './BikeList';
+export { default as BikeEdit } from './BikeEdit';

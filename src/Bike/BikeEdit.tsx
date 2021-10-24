@@ -5,7 +5,10 @@ import {
     IonButtons,
     IonCheckbox,
     IonContent,
+    IonFab,
+    IonFabButton,
     IonHeader,
+    IonIcon,
     IonInput,
     IonItem,
     IonLabel,
@@ -19,6 +22,7 @@ import {getLogger} from '../core';
 import {BikeContext} from './BikeProvider';
 import {RouteComponentProps} from 'react-router';
 import {BikeProps} from './BikeProps';
+import {remove} from "ionicons/icons";
 
 const log = getLogger('BikeEdit');
 
@@ -29,7 +33,6 @@ interface BikeEditProps extends RouteComponentProps<{
 
 const BikeEdit: React.FC<BikeEditProps> = ({history, match}) => {
     const {bikes, saving, savingError, saveBike} = useContext(BikeContext);
-    //TODO: investigate these repeated useState
     const [name, setName] = useState('');
     const [condition, setCondition] = useState('');
     const [warranty, setWarranty] = useState(false);
@@ -58,6 +61,13 @@ const BikeEdit: React.FC<BikeEditProps> = ({history, match}) => {
         saveBike && saveBike(editedBike).then(() => history.goBack());
     };
     log('render');
+
+    let DeleteButton = bike ? (<IonFab vertical="bottom" horizontal="end" slot="fixed">
+        <IonFabButton>
+            <IonIcon icon={remove}/>
+        </IonFabButton>
+    </IonFab>) : null
+
     return (
         <IonPage>
             <IonHeader>
@@ -84,7 +94,6 @@ const BikeEdit: React.FC<BikeEditProps> = ({history, match}) => {
                         <IonLabel>Condition: </IonLabel>
                         <IonInput value={condition} onIonChange={e => setCondition(e.detail.value || '')}/>
                     </IonItem>
-                    {/*TODO: investigate here with boolean condition*/}
                     <IonItem>
                         <IonLabel>Warranty: </IonLabel>
                         <IonCheckbox checked={warranty} onIonChange={e => setWarranty(e.detail.checked)}/>
@@ -99,6 +108,7 @@ const BikeEdit: React.FC<BikeEditProps> = ({history, match}) => {
                 {savingError && (
                     <div>{savingError.message || 'Failed to save bike'}</div>
                 )}
+                {DeleteButton}
             </IonContent>
         </IonPage>
     );

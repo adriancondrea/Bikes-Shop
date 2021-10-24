@@ -13,9 +13,9 @@ import {
     IonToolbar
 } from '@ionic/react';
 import {add} from 'ionicons/icons';
-import Bike from './Bike';
 import {getLogger} from '../core';
 import {BikeContext} from './BikeProvider';
+import Bike from "./Bike";
 
 const log = getLogger('BikeList');
 

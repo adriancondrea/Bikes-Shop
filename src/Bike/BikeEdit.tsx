@@ -1,5 +1,6 @@
 import React, {useContext, useEffect, useState} from 'react';
 import {
+    IonBackButton,
     IonButton,
     IonButtons,
     IonCheckbox,
@@ -62,6 +63,9 @@ const BikeEdit: React.FC<BikeEditProps> = ({history, match}) => {
             <IonHeader>
                 <IonToolbar>
                     <IonTitle>Edit</IonTitle>
+                    <IonButtons slot={"start"}>
+                        <IonBackButton defaultHref="/bikes"/>
+                    </IonButtons>
                     <IonButtons slot="end">
                         <IonButton onClick={handleSave}>
                             Save

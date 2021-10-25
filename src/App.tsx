@@ -2,7 +2,7 @@ import React from 'react';
 import { Redirect, Route } from 'react-router-dom';
 import { IonApp, IonRouterOutlet } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
-import { BikeEdit, BikeList } from './Bike';
+import { BikeEdit, BikeList } from './bike';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -22,7 +22,7 @@ import '@ionic/react/css/display.css';
 
 /* Theme variables */
 import './theme/variables.css';
-import { BikeProvider } from './Bike/BikeProvider';
+import { BikeProvider } from './bike/BikeProvider';
 
 const App: React.FC = () => (
   <IonApp>

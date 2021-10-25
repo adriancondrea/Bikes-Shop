@@ -68,11 +68,13 @@ const BikeEdit: React.FC<BikeEditProps> = ({history, match}) => {
         </IonFabButton>
     </IonFab>) : null
 
+    let pageTitle = bike ? (<IonTitle>Edit</IonTitle>) : (<IonTitle>Add</IonTitle>)
+
     return (
         <IonPage>
             <IonHeader>
                 <IonToolbar>
-                    <IonTitle>Edit</IonTitle>
+                    {pageTitle}
                     <IonButtons slot={"start"}>
                         <IonBackButton defaultHref="/bikes"/>
                     </IonButtons>

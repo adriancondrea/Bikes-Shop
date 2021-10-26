@@ -32,7 +32,7 @@ interface BikeEditProps extends RouteComponentProps<{
 }
 
 const BikeEdit: React.FC<BikeEditProps> = ({history, match}) => {
-    const {bikes, saving, savingError, saveBike} = useContext(BikeContext);
+    const {bikes, saving, savingError, saveBike, deleteBike} = useContext(BikeContext);
     const [name, setName] = useState('');
     const [condition, setCondition] = useState('');
     const [warranty, setWarranty] = useState(false);
@@ -62,8 +62,18 @@ const BikeEdit: React.FC<BikeEditProps> = ({history, match}) => {
     };
     log('render');
 
+    let handleDelete = () => {
+        const deletedBike = bike ? {...bike, name, condition, warranty, price} : {
+            name: name,
+            condition: condition,
+            warranty: warranty,
+            price: price
+        };
+        deleteBike && deleteBike(deletedBike).then(() => history.goBack());
+    };
+
     let DeleteButton = bike ? (<IonFab vertical="bottom" horizontal="end" slot="fixed">
-        <IonFabButton>
+        <IonFabButton onClick={handleDelete}>
             <IonIcon icon={remove}/>
         </IonFabButton>
     </IonFab>) : null

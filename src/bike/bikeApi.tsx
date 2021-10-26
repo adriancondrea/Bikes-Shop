@@ -42,6 +42,10 @@ export const updateBike: (bike: BikeProps) => Promise<BikeProps[]> = bike => {
     return withLogs(axios.put(`${bikeUrl}/${bike.id}`, bike, config), 'updateBike');
 }
 
+export const deleteBike: (bike: BikeProps) => Promise<BikeProps[]> = bike => {
+    return withLogs(axios.delete(`${bikeUrl}/${bike.id}`, config), 'deleteBike');
+}
+
 interface MessageData {
     event: string;
     payload: {

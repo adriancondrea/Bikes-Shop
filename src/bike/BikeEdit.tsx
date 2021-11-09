@@ -42,7 +42,7 @@ const BikeEdit: React.FC<BikeEditProps> = ({history, match}) => {
     useEffect(() => {
         log('useEffect');
         const routeId = match.params.id || '';
-        const bike = bikes?.find(it => it.id === routeId);
+        const bike = bikes?.find(it => it._id === routeId);
         setBike(bike);
         if (bike) {
             setName(bike.name);

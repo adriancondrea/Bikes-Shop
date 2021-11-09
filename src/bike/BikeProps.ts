@@ -1,5 +1,5 @@
 export interface BikeProps {
-  id?: string;
+  _id?: string;
   name: string;
   condition: string;
   warranty: boolean;

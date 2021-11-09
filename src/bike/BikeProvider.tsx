@@ -1,8 +1,9 @@
-import React, {useCallback, useEffect, useReducer} from 'react';
+import React, {useCallback, useContext, useEffect, useReducer} from 'react';
 import PropTypes from 'prop-types';
 import {getLogger} from '../core';
 import {BikeProps} from './BikeProps';
 import {createBike, deleteBike, getBikes, newWebSocket, updateBike} from './bikeApi';
+import {AuthContext } from "../auth";
 
 const log = getLogger('BikeProvider');
 
@@ -57,7 +58,7 @@ const reducer: (state: BikesState, action: ActionProps) => BikesState =
             case SAVE_BIKE_SUCCEEDED: {
                 const bikes = [...(state.bikes || [])];
                 const bike = payload.bike;
-                const index = bikes.findIndex(it => it.id === bike.id);
+                const index = bikes.findIndex(it => it._id === bike._id);
                 if (index === -1) {
                     bikes.splice(0, 0, bike);
                 } else {
@@ -72,7 +73,7 @@ const reducer: (state: BikesState, action: ActionProps) => BikesState =
             case DELETE_BIKE_SUCCEEDED: {
                 let bikes = [...(state.bikes || [])];
                 const bike = payload.bike;
-                const index = bikes.findIndex(it => it.id === bike.id);
+                const index = bikes.findIndex(it => it._id === bike._id);
                 if (index !== -1) {
                     bikes.splice(index, 1);
                 }
@@ -92,18 +93,19 @@ interface BikeProviderProps {
 }
 
 export const BikeProvider: React.FC<BikeProviderProps> = ({children}) => {
+    const { token } = useContext(AuthContext);
     const [state, dispatch] = useReducer(reducer, initialState);
     const {bikes, fetching, fetchingError, saving, savingError, deleting, deletingError} = state;
-    useEffect(getBikesEffect, []);
-    useEffect(wsEffect, []);
-    const saveBike = useCallback<SaveBikeFn>(saveBikeCallback, []);
-    const removeBike = useCallback<DeleteBikeFn>(deleteBikeCallback, []);
+    useEffect(getBikesEffect, [token]);
+    useEffect(wsEffect, [token]);
+    const saveBike = useCallback<SaveBikeFn>(saveBikeCallback, [token]);
+    const removeBike = useCallback<DeleteBikeFn>(deleteBikeCallback, [token]);
 
     async function deleteBikeCallback(bike: BikeProps) {
         try {
             log('deleteBike started');
             dispatch({type: DELETE_BIKE_STARTED});
-            const deletedBike = await deleteBike(bike);
+            const deletedBike = await deleteBike(token, bike);
             log('deleteBike succeeded');
             dispatch({type: DELETE_BIKE_SUCCEEDED, payload: {bike: deletedBike}});
         } catch (error) {
@@ -138,10 +140,13 @@ export const BikeProvider: React.FC<BikeProviderProps> = ({children}) => {
         }
 
         async function fetchBikes() {
+            if(!token?.trim()){
+                return;
+            }
             try {
                 log('fetchBikes started');
                 dispatch({type: FETCH_BIKES_STARTED});
-                const bikes = await getBikes();
+                const bikes = await getBikes(token);
                 log('fetchBikes succeeded');
                 if (!canceled) {
                     dispatch({type: FETCH_BIKES_SUCCEEDED, payload: {bikes}});
@@ -157,7 +162,7 @@ export const BikeProvider: React.FC<BikeProviderProps> = ({children}) => {
         try {
             log('saveBike started');
             dispatch({type: SAVE_BIKE_STARTED});
-            const savedBike = await (bike.id ? updateBike(bike) : createBike(bike));
+            const savedBike = await (bike._id ? updateBike(token, bike) : createBike(token,bike));
             log('saveBike succeeded');
             dispatch({type: SAVE_BIKE_SUCCEEDED, payload: {bike: savedBike}});
         } catch (error) {
@@ -169,23 +174,26 @@ export const BikeProvider: React.FC<BikeProviderProps> = ({children}) => {
     function wsEffect() {
         let canceled = false;
         log('wsEffect - connecting');
-        const closeWebSocket = newWebSocket(message => {
-            if (canceled) {
-                return;
-            }
-            const {event, payload: {bike}} = message;
-            log(`ws message, bike ${event}`);
-            if (event === 'created' || event === 'updated') {
-                dispatch({type: SAVE_BIKE_SUCCEEDED, payload: {bike: bike}});
-            }
-            if (event === 'deleted') {
-                dispatch({type: DELETE_BIKE_SUCCEEDED, payload: {bike: bike}});
-            }
-        });
+        let closeWebSocket: () => void;
+        if(token?.trim()) {
+            closeWebSocket = newWebSocket(token,message => {
+                if (canceled) {
+                    return;
+                }
+                const {type, payload: bike} = message;
+                log(`ws message, bike ${type}`);
+                if (type === 'created' || type === 'updated') {
+                    dispatch({type: SAVE_BIKE_SUCCEEDED, payload: {bike: bike}});
+                }
+                if (type === 'deleted') {
+                    dispatch({type: DELETE_BIKE_SUCCEEDED, payload: {bike: bike}});
+                }
+            });
+        }
         return () => {
             log('wsEffect - disconnecting');
             canceled = true;
-            closeWebSocket();
+            closeWebSocket?.();
         }
     }
 };

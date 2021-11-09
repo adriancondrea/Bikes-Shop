@@ -14,12 +14,12 @@ import BikeImage from "../assets/img/bike.jpeg";
 import {closeCircle, shieldCheckmarkOutline} from "ionicons/icons";
 
 interface BikePropsExt extends BikeProps {
-    onEdit: (id?: string) => void;
+    onEdit: (_id?: string) => void;
 }
 
-const Bike: React.FC<BikePropsExt> = ({id, name, condition, warranty, price, onEdit}) => {
+const Bike: React.FC<BikePropsExt> = ({_id, name, condition, warranty, price, onEdit}) => {
     return (
-        <IonCard onClick={() => onEdit(id)}>
+        <IonCard onClick={() => onEdit(_id)}>
             <IonImg src={BikeImage} alt={"bike"}/>
             <IonCardHeader>
                 <IonCardTitle>{name}</IonCardTitle>

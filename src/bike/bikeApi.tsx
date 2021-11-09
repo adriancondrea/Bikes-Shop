@@ -1,62 +1,37 @@
 import axios from 'axios';
-import {getLogger} from '../core';
+import {authConfig, baseUrl, getLogger, withLogs } from '../core';
 import {BikeProps} from './BikeProps';
 
-const log = getLogger('bikeApi');
+const bikeUrl = `http://${baseUrl}/api/bike`;
 
-const baseUrl = 'localhost:3000';
-const bikeUrl = `http://${baseUrl}/bike`;
-
-interface ResponseProps<T> {
-    data: T;
+export const getBikes: (token: string) => Promise<BikeProps[]> = token => {
+    return withLogs(axios.get(bikeUrl, authConfig(token)), 'getBikes');
 }
 
-function withLogs<T>(promise: Promise<ResponseProps<T>>, fnName: string): Promise<T> {
-    log(`${fnName} - started`);
-    return promise
-        .then(res => {
-            log(`${fnName} - succeeded`);
-            return Promise.resolve(res.data);
-        })
-        .catch(err => {
-            log(`${fnName} - failed`);
-            return Promise.reject(err);
-        });
+export const createBike: (token: string, bike: BikeProps) => Promise<BikeProps[]> = (token, bike) =>{
+    return withLogs(axios.post(bikeUrl, bike, authConfig(token)), 'createBike');
 }
 
-const config = {
-    headers: {
-        'Content-Type': 'application/json'
-    }
-};
-
-export const getBikes: () => Promise<BikeProps[]> = () => {
-    return withLogs(axios.get(bikeUrl, config), 'getBikes');
+export const updateBike: (token: string, bike: BikeProps) => Promise<BikeProps[]> = (token, bike) => {
+    return withLogs(axios.put(`${bikeUrl}/${bike._id}`, bike, authConfig(token)), 'updateBike');
 }
 
-export const createBike: (bike: BikeProps) => Promise<BikeProps[]> = bike => {
-    return withLogs(axios.post(bikeUrl, bike, config), 'createBike');
-}
-
-export const updateBike: (bike: BikeProps) => Promise<BikeProps[]> = bike => {
-    return withLogs(axios.put(`${bikeUrl}/${bike.id}`, bike, config), 'updateBike');
-}
-
-export const deleteBike: (bike: BikeProps) => Promise<BikeProps[]> = bike => {
-    return withLogs(axios.delete(`${bikeUrl}/${bike.id}`, config), 'deleteBike');
+export const deleteBike: (token: string, bike: BikeProps) => Promise<BikeProps[]> = (token, bike) => {
+    return withLogs(axios.delete(`${bikeUrl}/${bike._id}`, authConfig(token)), 'deleteBike');
 }
 
 interface MessageData {
-    event: string;
-    payload: {
-        bike: BikeProps;
-    };
+    type: string;
+    payload: BikeProps;
 }
 
-export const newWebSocket = (onMessage: (data: MessageData) => void) => {
-    const ws = new WebSocket(`ws://${baseUrl}`)
+const log = getLogger('ws');
+
+export const newWebSocket = (token: string, onMessage: (data: MessageData) => void) => {
+    const ws = new WebSocket(`ws://${baseUrl}`);
     ws.onopen = () => {
         log('web socket onopen');
+        ws.send(JSON.stringify({ type: 'authorization', payload: { token } }));
     };
     ws.onclose = () => {
         log('web socket onclose');

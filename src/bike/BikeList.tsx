@@ -1,14 +1,17 @@
 import React, {useContext} from 'react';
 import {RouteComponentProps} from 'react-router';
 import {
+    IonButton,
     IonContent,
     IonFab,
     IonFabButton,
+    IonGrid,
     IonHeader,
     IonIcon,
     IonList,
     IonLoading,
     IonPage,
+    IonRow,
     IonTitle,
     IonToolbar
 } from '@ionic/react';
@@ -26,15 +29,21 @@ const BikeList: React.FC<RouteComponentProps> = ({history}) => {
         <IonPage>
             <IonHeader>
                 <IonToolbar>
-                    <IonTitle>Bikes Shop</IonTitle>
+                    <IonGrid>
+                        <IonRow>
+                            <IonTitle>Bikes Shop</IonTitle>
+                            <IonButton>Logout</IonButton>
+                        </IonRow>
+                    </IonGrid>
                 </IonToolbar>
             </IonHeader>
             <IonContent>
                 <IonLoading isOpen={fetching} message="Fetching items"/>
                 {bikes && (
                     <IonList>
-                        {bikes.map(({id, name, condition, warranty, price}) =>
-                            <Bike key={id} id={id} name={name} condition={condition} warranty={warranty} price={price}
+                        {bikes.map(({_id, name, condition, warranty, price}) =>
+                            <Bike key={_id} _id={_id} name={name} condition={condition} warranty={warranty}
+                                  price={price}
                                   onEdit={id => history.push(`/bike/${id}`)}/>)}
                     </IonList>
                 )}

@@ -55,11 +55,12 @@ router.put('/:id', async (ctx) => {
   if (!noteId) {
     await createNote(ctx, note, response);
   } else {
+    const userId = ctx.state.user._id;
+    note.userId = userId;
     const updatedCount = await noteStore.update({ _id: id }, note);
     if (updatedCount === 1) {
       response.body = note;
       response.status = 200; // ok
-      const userId = ctx.state.user._id;
       broadcast(userId, { type: 'updated', payload: note });
     } else {
       response.body = { message: 'Resource no longer exists' };

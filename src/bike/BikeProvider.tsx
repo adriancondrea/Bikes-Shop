@@ -1,9 +1,11 @@
-import React, {useCallback, useContext, useEffect, useReducer} from 'react';
+import React, {useCallback, useContext, useEffect, useReducer, useState} from 'react';
 import PropTypes from 'prop-types';
 import {getLogger} from '../core';
 import {BikeProps} from './BikeProps';
-import {createBike, deleteBike, getBikes, newWebSocket, updateBike} from './bikeApi';
-import {AuthContext } from "../auth";
+import {createBike, deleteBike, getBikes, newWebSocket, syncData, updateBike} from './bikeApi';
+import {AuthContext} from "../auth";
+import {Network} from "@capacitor/network";
+import {Storage} from "@capacitor/storage";
 
 const log = getLogger('BikeProvider');
 
@@ -19,7 +21,10 @@ export interface BikesState {
     saveBike?: SaveBikeFn,
     deleting: boolean,
     deletingError?: Error | null,
-    deleteBike?: DeleteBikeFn
+    deleteBike?: DeleteBikeFn,
+    connectedNetwork?: boolean,
+    setSavedOffline?: Function,
+    savedOffline?: boolean
 }
 
 interface ActionProps {
@@ -93,14 +98,21 @@ interface BikeProviderProps {
 }
 
 export const BikeProvider: React.FC<BikeProviderProps> = ({children}) => {
-    const { token } = useContext(AuthContext);
+    const {token} = useContext(AuthContext);
     const [state, dispatch] = useReducer(reducer, initialState);
     const {bikes, fetching, fetchingError, saving, savingError, deleting, deletingError} = state;
+
+    const [networkStatus, setNetworkStatus] = useState<boolean>(false);
+    Network.getStatus().then(status => setNetworkStatus(status.connected));
+    const [savedOffline, setSavedOffline] = useState<boolean>(false);
+    useEffect(networkEffect, [token, setNetworkStatus]);
+
     useEffect(getBikesEffect, [token]);
     useEffect(wsEffect, [token]);
     const saveBike = useCallback<SaveBikeFn>(saveBikeCallback, [token]);
     const removeBike = useCallback<DeleteBikeFn>(deleteBikeCallback, [token]);
 
+    //TODO: update delete to work offline
     async function deleteBikeCallback(bike: BikeProps) {
         try {
             log('deleteBike started');
@@ -132,51 +144,125 @@ export const BikeProvider: React.FC<BikeProviderProps> = ({children}) => {
         </BikeContext.Provider>
     );
 
-    function getBikesEffect() {
+    function networkEffect() {
+        console.log("network effect");
+        log('network effect');
         let canceled = false;
-        fetchBikes();
+        Network.addListener('networkStatusChange', async (status) => {
+            if (canceled)
+                return;
+            const connected = status.connected;
+            if (connected) {
+                alert('SYNC data');
+                log('sync data');
+                await syncData(token);
+            }
+            setNetworkStatus(status.connected);
+        });
         return () => {
             canceled = true;
         }
+    }
+
+    function getBikesEffect() {
+        let cancelled = false;
+        fetchBikes().then(r => log(r));
+        return () => {
+            cancelled = true;
+        }
 
         async function fetchBikes() {
-            if(!token?.trim()){
+            if (!token?.trim()) {
                 return;
             }
-            try {
-                log('fetchBikes started');
-                dispatch({type: FETCH_BIKES_STARTED});
-                const bikes = await getBikes(token);
-                log('fetchBikes succeeded');
-                if (!canceled) {
-                    dispatch({type: FETCH_BIKES_SUCCEEDED, payload: {bikes}});
+            if (!navigator?.onLine) {
+                alert("FETCHING ELEMENTS OFFLINE!");
+                let storageKeys = Storage.keys();
+                const bikes = await storageKeys.then(async function (storageKeys) {
+                    const saved = []
+                    for (let i = 0; i < storageKeys.keys.length; i++) {
+                        if (storageKeys.keys[i] !== 'token') {
+                            const bike = await Storage.get({key: storageKeys.keys[i]});
+                            if (bike.value != null)
+                                var parsedBike = JSON.parse(bike.value);
+                            saved.push(parsedBike);
+                        }
+                    }
+                    return saved;
+                });
+                dispatch({type: FETCH_BIKES_SUCCEEDED, payload: {bikes: bikes}});
+            } else {
+                try {
+                    log('fetchBikes started');
+                    dispatch({type: FETCH_BIKES_STARTED});
+
+                    const bikes = await getBikes(token);
+                    log('fetchBikes succeeded');
+                    if (!cancelled) {
+                        dispatch({type: FETCH_BIKES_SUCCEEDED, payload: {bikes: bikes}});
+                    }
+                } catch (error) {
+                    let storageKeys = Storage.keys();
+                    const bikes = await storageKeys.then(async function (storageKeys) {
+                        const saved = []
+                        for (let i = 0; i < storageKeys.keys.length; i++) {
+                            if (storageKeys.keys[i] !== 'token') {
+                                const bike = await Storage.get({key: storageKeys.keys[i]});
+                                if (bike.value != null)
+                                    var parsedBike = JSON.parse(bike.value);
+                                saved.push(parsedBike);
+                            }
+                        }
+                        return saved;
+                    });
+                    dispatch({type: FETCH_BIKES_SUCCEEDED, payload: {bikes: bikes}});
                 }
-            } catch (error) {
-                log('fetchBikes failed');
-                dispatch({type: FETCH_BIKES_FAILED, payload: {error}});
             }
         }
     }
 
     async function saveBikeCallback(bike: BikeProps) {
         try {
-            log('saveBike started');
-            dispatch({type: SAVE_BIKE_STARTED});
-            const savedBike = await (bike._id ? updateBike(token, bike) : createBike(token,bike));
-            log('saveBike succeeded');
-            dispatch({type: SAVE_BIKE_SUCCEEDED, payload: {bike: savedBike}});
+            if (navigator.onLine) {
+                log('saveBike started');
+                dispatch({type: SAVE_BIKE_STARTED});
+                const savedBike = await (bike._id ? updateBike(token, bike) : createBike(token, bike));
+                log('saveBike succeeded');
+                dispatch({type: SAVE_BIKE_SUCCEEDED, payload: {bike: savedBike}});
+            } else {
+                alert("SAVED OFFLINE");
+                log('saveBike failed');
+                bike._id = (bike._id === undefined) ? ('_' + Math.random().toString(36).substr(2, 9)) : bike._id;
+                await Storage.set({
+                    key: bike._id!,
+                    value: JSON.stringify({
+                        _id: bike._id,
+                        name: bike.name,
+                        condition: bike.condition,
+                        warranty: bike.warranty,
+                        price: bike.price
+                    })
+                });
+                dispatch({type: SAVE_BIKE_SUCCEEDED, payload: {bike: bike}});
+                setSavedOffline(true);
+            }
         } catch (error) {
             log('saveBike failed');
-            dispatch({type: SAVE_BIKE_FAILED, payload: {error}});
+            await Storage.set({
+                key: String(bike._id),
+                value: JSON.stringify(bike)
+            })
+            dispatch({type: SAVE_BIKE_SUCCEEDED, payload: {bike: bike}});
         }
+
     }
 
     function wsEffect() {
         let canceled = false;
         log('wsEffect - connecting');
         let closeWebSocket: () => void;
-        if(token?.trim()) {
-            closeWebSocket = newWebSocket(token,message => {
+        if (token?.trim()) {
+            closeWebSocket = newWebSocket(token, message => {
                 if (canceled) {
                     return;
                 }

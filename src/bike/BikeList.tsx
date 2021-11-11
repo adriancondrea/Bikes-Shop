@@ -2,7 +2,6 @@ import React, {useContext, useEffect, useState} from 'react';
 import {RouteComponentProps} from 'react-router';
 import {
     IonButton,
-    IonChip,
     IonContent,
     IonFab,
     IonFabButton,
@@ -91,6 +90,8 @@ const BikeList: React.FC<RouteComponentProps> = ({history}) => {
     }
 
     async function searchNext($event: CustomEvent<void>) {
+        //TODO: set timeout to observe fetchData behaviour
+        await new Promise(resolve => setTimeout(resolve, 2000));
         fetchData();
         log("pagination");
         ($event.target as HTMLIonInfiniteScrollElement).complete();
@@ -102,7 +103,10 @@ const BikeList: React.FC<RouteComponentProps> = ({history}) => {
                 <IonToolbar>
                     <IonGrid>
                         <IonRow>
-                            <IonTitle>Bikes Shop</IonTitle>
+                            <IonTitle>
+                                <IonLabel
+                                    color={networkStatus ? "success" : "danger"}>{networkStatus ? "Bikes Shop - Online" : "Bikes Shop - Offline"}</IonLabel>
+                            </IonTitle>
                             <IonButton onClick={handleLogout}>Logout</IonButton>
                         </IonRow>
                         <IonRow>
@@ -112,10 +116,6 @@ const BikeList: React.FC<RouteComponentProps> = ({history}) => {
                             }}/>
                             <IonInput style={{width: '20%'}} type="number" value={filter} placeholder="Filter by price"
                                       onIonChange={(e) => setFilter(e.detail.value ? e.detail.value : undefined)}/>
-                            <IonChip>
-                                <IonLabel
-                                    color={networkStatus ? "success" : "danger"}>{networkStatus ? "Online" : "Offline"}</IonLabel>
-                            </IonChip>
                         </IonRow>
                     </IonGrid>
                 </IonToolbar>

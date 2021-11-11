@@ -1,13 +1,13 @@
 import axios from 'axios';
-import {authConfig, baseUrl, getLogger, withLogs } from '../core';
+import {authConfig, baseUrl, getLogger, withLogs} from '../core';
 import {BikeProps} from './BikeProps';
-import { Storage } from '@capacitor/storage';
+import {Storage} from '@capacitor/storage';
 
 const bikeUrl = `http://${baseUrl}/api/bike`;
 
 export const getBikes: (token: string) => Promise<BikeProps[]> = token => {
-    try{
-        var result = axios.get(`${bikeUrl}`, authConfig(token));
+    try {
+        const result = axios.get(`${bikeUrl}`, authConfig(token));
         result.then(async result => {
             // @ts-ignore
             for (const each of result.data) {
@@ -32,16 +32,16 @@ export const getBikes: (token: string) => Promise<BikeProps[]> = token => {
             }
         });
         return withLogs(result, 'getBikes');
-    } catch (error){
+    } catch (error) {
         throw error;
     }
     // return withLogs(axios.get(bikeUrl, authConfig(token)), 'getBikes');
 }
 
-export const createBike: (token: string, bike: BikeProps) => Promise<BikeProps[]> = (token, bike) =>{
-    var result = axios.post(`${bikeUrl}`, bike, authConfig(token));
-    result.then(async result =>{
-        var item: any = result.data
+export const createBike: (token: string, bike: BikeProps) => Promise<BikeProps[]> = (token, bike) => {
+    const result = axios.post(`${bikeUrl}`, bike, authConfig(token));
+    result.then(async result => {
+        const item: any = result.data;
         await Storage.set({
             key: item._id!,
             value: JSON.stringify({
@@ -66,9 +66,9 @@ export const createBike: (token: string, bike: BikeProps) => Promise<BikeProps[]
 }
 
 export const updateBike: (token: string, bike: BikeProps) => Promise<BikeProps[]> = (token, bike) => {
-    var result = axios.put(`${bikeUrl}/${bike._id}`, bike, authConfig(token));
-    result.then(async result =>{
-        var item: any = result.data
+    const result = axios.put(`${bikeUrl}/${bike._id}`, bike, authConfig(token));
+    result.then(async result => {
+        const item: any = result.data;
         await Storage.set({
             key: item._id!,
             value: JSON.stringify({
@@ -102,19 +102,19 @@ const equals = (bike1: any, bike2: any) => {
 
 // @ts-ignore
 export const syncData: (token: string) => Promise<BikeProps[]> = async token => {
-    try{
-        const { keys } = await Storage.keys();
-        var result = axios.get(`${bikeUrl}`, authConfig(token));
-        result.then(async result =>{
+    try {
+        const {keys} = await Storage.keys();
+        const result = axios.get(`${bikeUrl}`, authConfig(token));
+        result.then(async result => {
             for (const key of keys) {
-                if( key !== 'token'){
+                if (key !== 'token') {
                     // @ts-ignore
                     const bikeOnServer = result.data.find((each: { _id: string; }) => each._id === key);
                     const bikeLocal = await Storage.get({key: key});
 
-                    if (bikeOnServer !== undefined && !equals(bikeOnServer, JSON.parse(bikeLocal.value!))){ //update
+                    if (bikeOnServer !== undefined && !equals(bikeOnServer, JSON.parse(bikeLocal.value!))) { //update
                         axios.put(`${bikeUrl}/${key}`, JSON.parse(bikeLocal.value!), authConfig(token));
-                    } else if (bikeOnServer === undefined){ //create
+                    } else if (bikeOnServer === undefined) { //create
                         axios.post(`${bikeUrl}`, JSON.parse(bikeLocal.value!), authConfig(token));
                     } // nothing changed
                 }
@@ -147,9 +147,9 @@ export const newWebSocket = (token: string, onMessage: (data: MessageData) => vo
     const ws = new WebSocket(`ws://${baseUrl}`);
     ws.onopen = () => {
         log('web socket onopen');
-        ws.send(JSON.stringify({ type: 'authorization', payload: { token } }));
+        ws.send(JSON.stringify({type: 'authorization', payload: {token}}));
     };
-    ws.onclose = function(event) {
+    ws.onclose = function (event) {
         console.log(event);
         log('web socket onclose');
     };

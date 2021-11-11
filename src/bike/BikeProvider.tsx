@@ -98,208 +98,198 @@ interface BikeProviderProps {
 }
 
 export const BikeProvider: React.FC<BikeProviderProps> = ({children}) => {
-    const {token} = useContext(AuthContext);
-    const [state, dispatch] = useReducer(reducer, initialState);
-    const {bikes, fetching, fetchingError, saving, savingError, deleting, deletingError} = state;
+        const {token} = useContext(AuthContext);
+        const [state, dispatch] = useReducer(reducer, initialState);
+        const {bikes, fetching, fetchingError, saving, savingError, deleting, deletingError} = state;
 
-    const [networkStatus, setNetworkStatus] = useState<boolean>(false);
-    Network.getStatus().then(status => setNetworkStatus(status.connected));
-    const [savedOffline, setSavedOffline] = useState<boolean>(false);
-    const [deletedOffline, setDeletedOffline] = useState<boolean>(false);
-    useEffect(networkEffect, [token, setNetworkStatus]);
+        const [networkStatus, setNetworkStatus] = useState<boolean>(false);
+        Network.getStatus().then(status => setNetworkStatus(status.connected));
+        const [savedOffline, setSavedOffline] = useState<boolean>(false);
+        const [deletedOffline, setDeletedOffline] = useState<boolean>(false);
+        useEffect(networkEffect, [token, setNetworkStatus]);
 
-    useEffect(getBikesEffect, [token]);
-    useEffect(wsEffect, [token]);
-    const saveBike = useCallback<SaveBikeFn>(saveBikeCallback, [token]);
-    const removeBike = useCallback<DeleteBikeFn>(deleteBikeCallback, [token]);
+        useEffect(getBikesEffect, [token]);
+        useEffect(wsEffect, [token]);
+        const saveBike = useCallback<SaveBikeFn>(saveBikeCallback, [token]);
+        const removeBike = useCallback<DeleteBikeFn>(deleteBikeCallback, [token]);
 
-    //TODO: update delete to work offline
-    async function deleteBikeCallback(bike: BikeProps) {
-        try {
-            if (navigator.onLine) {
-                log('deleteBike started');
-                dispatch({type: DELETE_BIKE_STARTED});
-                const deletedBike = await deleteBike(token, bike);
-                log('deleteBike succeeded');
-                dispatch({type: DELETE_BIKE_SUCCEEDED, payload: {bike: deletedBike}});
-            } else {
-                alert("DELETED OFFLINE");
-                log('deleteBike failed');
-                bike._id = (bike._id === undefined) ? ('_' + Math.random().toString(36).substr(2, 9)) : bike._id;
-                await Storage.set({
-                    key: bike._id!,
-                    value: JSON.stringify({
-                        _id: bike._id,
-                        name: bike.name,
-                        condition: bike.condition,
-                        warranty: bike.warranty,
-                        price: bike.price
-                    })
-                });
-                dispatch({type: DELETE_BIKE_SUCCEEDED, payload: {bike: bike}});
-                setDeletedOffline(true);
-            }
-        } catch (error) {
-            log('deleteBike failed');
-            dispatch({type: DELETE_BIKE_FAILED, payload: {error}});
-        }
-    }
-
-const value = {
-    bikes,
-    fetching,
-    fetchingError,
-    saving,
-    savingError,
-    saveBike: saveBike,
-    deleting,
-    deletingError,
-    deleteBike: removeBike
-};
-log('returns');
-return (
-    <BikeContext.Provider value={value}>
-        {children}
-    </BikeContext.Provider>
-);
-
-function networkEffect() {
-    console.log("network effect");
-    log('network effect');
-    let canceled = false;
-    Network.addListener('networkStatusChange', async (status) => {
-        if (canceled)
-            return;
-        const connected = status.connected;
-        if (connected) {
-            alert('SYNC data');
-            log('sync data');
-            await syncData(token);
-        }
-        setNetworkStatus(status.connected);
-    });
-    return () => {
-        canceled = true;
-    }
-}
-
-function getBikesEffect() {
-    let cancelled = false;
-    fetchBikes().then(r => log(r));
-    return () => {
-        cancelled = true;
-    }
-
-    async function fetchBikes() {
-        if (!token?.trim()) {
-            return;
-        }
-        if (!navigator?.onLine) {
-            alert("FETCHING ELEMENTS OFFLINE!");
-            let storageKeys = Storage.keys();
-            const bikes = await storageKeys.then(async function (storageKeys) {
-                const saved = []
-                for (let i = 0; i < storageKeys.keys.length; i++) {
-                    if (storageKeys.keys[i] !== 'token') {
-                        const bike = await Storage.get({key: storageKeys.keys[i]});
-                        if (bike.value != null)
-                            var parsedBike = JSON.parse(bike.value);
-                        saved.push(parsedBike);
-                    }
-                }
-                return saved;
-            });
-            dispatch({type: FETCH_BIKES_SUCCEEDED, payload: {bikes: bikes}});
-        } else {
+        async function deleteBikeCallback(bike: BikeProps) {
             try {
-                log('fetchBikes started');
-                dispatch({type: FETCH_BIKES_STARTED});
-
-                const bikes = await getBikes(token);
-                log('fetchBikes succeeded');
-                if (!cancelled) {
-                    dispatch({type: FETCH_BIKES_SUCCEEDED, payload: {bikes: bikes}});
+                if (navigator.onLine) {
+                    log('deleteBike started');
+                    dispatch({type: DELETE_BIKE_STARTED});
+                    const deletedBike = await deleteBike(token, bike);
+                    log('deleteBike succeeded');
+                    dispatch({type: DELETE_BIKE_SUCCEEDED, payload: {bike: deletedBike}});
+                } else {
+                    alert("DELETED OFFLINE");
+                    log('deleteBike failed');
+                    bike._id = (bike._id === undefined) ? ('_' + Math.random().toString(36).substr(2, 9)) : bike._id;
+                    await Storage.remove({key: bike._id});
+                    dispatch({type: DELETE_BIKE_SUCCEEDED, payload: {bike: bike}});
+                    setDeletedOffline(true);
                 }
             } catch (error) {
-                let storageKeys = Storage.keys();
-                const bikes = await storageKeys.then(async function (storageKeys) {
-                    const saved = []
-                    for (let i = 0; i < storageKeys.keys.length; i++) {
-                        if (storageKeys.keys[i] !== 'token') {
-                            const bike = await Storage.get({key: storageKeys.keys[i]});
-                            if (bike.value != null)
-                                var parsedBike = JSON.parse(bike.value);
-                            saved.push(parsedBike);
-                        }
-                    }
-                    return saved;
-                });
-                dispatch({type: FETCH_BIKES_SUCCEEDED, payload: {bikes: bikes}});
+                log('deleteBike failed');
+                dispatch({type: DELETE_BIKE_FAILED, payload: {error}});
             }
         }
-    }
-}
 
-async function saveBikeCallback(bike: BikeProps) {
-    try {
-        if (navigator.onLine) {
-            log('saveBike started');
-            dispatch({type: SAVE_BIKE_STARTED});
-            const savedBike = await (bike._id ? updateBike(token, bike) : createBike(token, bike));
-            log('saveBike succeeded');
-            dispatch({type: SAVE_BIKE_SUCCEEDED, payload: {bike: savedBike}});
-        } else {
-            alert("SAVED OFFLINE");
-            log('saveBike failed');
-            bike._id = (bike._id === undefined) ? ('_' + Math.random().toString(36).substr(2, 9)) : bike._id;
-            await Storage.set({
-                key: bike._id!,
-                value: JSON.stringify({
-                    _id: bike._id,
-                    name: bike.name,
-                    condition: bike.condition,
-                    warranty: bike.warranty,
-                    price: bike.price
-                })
+        const value = {
+            bikes,
+            fetching,
+            fetchingError,
+            saving,
+            savingError,
+            saveBike: saveBike,
+            deleting,
+            deletingError,
+            deleteBike: removeBike
+        };
+        log('returns');
+        return (
+            <BikeContext.Provider value={value}>
+                {children}
+            </BikeContext.Provider>
+        );
+
+        function networkEffect() {
+            console.log("network effect");
+            log('network effect');
+            let canceled = false;
+            Network.addListener('networkStatusChange', async (status) => {
+                if (canceled)
+                    return;
+                const connected = status.connected;
+                if (connected) {
+                    alert('SYNC data');
+                    log('sync data');
+                    await syncData(token);
+                }
+                setNetworkStatus(status.connected);
             });
-            dispatch({type: SAVE_BIKE_SUCCEEDED, payload: {bike: bike}});
-            setSavedOffline(true);
-        }
-    } catch (error) {
-        log('saveBike failed');
-        await Storage.set({
-            key: String(bike._id),
-            value: JSON.stringify(bike)
-        })
-        dispatch({type: SAVE_BIKE_SUCCEEDED, payload: {bike: bike}});
-    }
-
-}
-
-function wsEffect() {
-    let canceled = false;
-    log('wsEffect - connecting');
-    let closeWebSocket: () => void;
-    if (token?.trim()) {
-        closeWebSocket = newWebSocket(token, message => {
-            if (canceled) {
-                return;
+            return () => {
+                canceled = true;
             }
-            const {type, payload: bike} = message;
-            log(`ws message, bike ${type}`);
-            if (type === 'created' || type === 'updated') {
+        }
+
+        function getBikesEffect() {
+            let cancelled = false;
+            fetchBikes().then(r => log(r));
+            return () => {
+                cancelled = true;
+            }
+
+            async function fetchBikes() {
+                if (!token?.trim()) {
+                    return;
+                }
+                if (!navigator?.onLine) {
+                    alert("FETCHING ELEMENTS OFFLINE!");
+                    let storageKeys = Storage.keys();
+                    const bikes = await storageKeys.then(async function (storageKeys) {
+                        const saved = []
+                        for (let i = 0; i < storageKeys.keys.length; i++) {
+                            if (storageKeys.keys[i] !== 'token') {
+                                const bike = await Storage.get({key: storageKeys.keys[i]});
+                                if (bike.value != null)
+                                    var parsedBike = JSON.parse(bike.value);
+                                saved.push(parsedBike);
+                            }
+                        }
+                        return saved;
+                    });
+                    dispatch({type: FETCH_BIKES_SUCCEEDED, payload: {bikes: bikes}});
+                } else {
+                    try {
+                        log('fetchBikes started');
+                        dispatch({type: FETCH_BIKES_STARTED});
+
+                        const bikes = await getBikes(token);
+                        log('fetchBikes succeeded');
+                        if (!cancelled) {
+                            dispatch({type: FETCH_BIKES_SUCCEEDED, payload: {bikes: bikes}});
+                        }
+                    } catch (error) {
+                        let storageKeys = Storage.keys();
+                        const bikes = await storageKeys.then(async function (storageKeys) {
+                            const saved = []
+                            for (let i = 0; i < storageKeys.keys.length; i++) {
+                                if (storageKeys.keys[i] !== 'token') {
+                                    const bike = await Storage.get({key: storageKeys.keys[i]});
+                                    if (bike.value != null)
+                                        var parsedBike = JSON.parse(bike.value);
+                                    saved.push(parsedBike);
+                                }
+                            }
+                            return saved;
+                        });
+                        dispatch({type: FETCH_BIKES_SUCCEEDED, payload: {bikes: bikes}});
+                    }
+                }
+            }
+        }
+
+        async function saveBikeCallback(bike: BikeProps) {
+            try {
+                if (navigator.onLine) {
+                    log('saveBike started');
+                    dispatch({type: SAVE_BIKE_STARTED});
+                    const savedBike = await (bike._id ? updateBike(token, bike) : createBike(token, bike));
+                    log('saveBike succeeded');
+                    dispatch({type: SAVE_BIKE_SUCCEEDED, payload: {bike: savedBike}});
+                } else {
+                    alert("SAVED OFFLINE");
+                    log('saveBike failed');
+                    bike._id = (bike._id === undefined) ? ('_' + Math.random().toString(36).substr(2, 9)) : bike._id;
+                    await Storage.set({
+                        key: bike._id!,
+                        value: JSON.stringify({
+                            _id: bike._id,
+                            name: bike.name,
+                            condition: bike.condition,
+                            warranty: bike.warranty,
+                            price: bike.price
+                        })
+                    });
+                    dispatch({type: SAVE_BIKE_SUCCEEDED, payload: {bike: bike}});
+                    setSavedOffline(true);
+                }
+            } catch (error) {
+                log('saveBike failed');
+                await Storage.set({
+                    key: String(bike._id),
+                    value: JSON.stringify(bike)
+                })
                 dispatch({type: SAVE_BIKE_SUCCEEDED, payload: {bike: bike}});
             }
-            if (type === 'deleted') {
-                dispatch({type: DELETE_BIKE_SUCCEEDED, payload: {bike: bike}});
+
+        }
+
+        function wsEffect() {
+            let canceled = false;
+            log('wsEffect - connecting');
+            let closeWebSocket: () => void;
+            if (token?.trim()) {
+                closeWebSocket = newWebSocket(token, message => {
+                    if (canceled) {
+                        return;
+                    }
+                    const {type, payload: bike} = message;
+                    log(`ws message, bike ${type}`);
+                    if (type === 'created' || type === 'updated') {
+                        dispatch({type: SAVE_BIKE_SUCCEEDED, payload: {bike: bike}});
+                    }
+                    if (type === 'deleted') {
+                        dispatch({type: DELETE_BIKE_SUCCEEDED, payload: {bike: bike}});
+                    }
+                });
             }
-        });
+            return () => {
+                log('wsEffect - disconnecting');
+                canceled = true;
+                closeWebSocket?.();
+            }
+        }
     }
-    return () => {
-        log('wsEffect - disconnecting');
-        canceled = true;
-        closeWebSocket?.();
-    }
-}
-}
 ;

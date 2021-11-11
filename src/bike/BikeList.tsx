@@ -28,7 +28,6 @@ import Bike from "./Bike";
 import {AuthContext} from "../auth";
 import {BikeProps} from "./BikeProps";
 import {Network} from "@capacitor/network";
-import {isNumber} from "util";
 
 const log = getLogger('BikeList');
 
@@ -54,6 +53,7 @@ const BikeList: React.FC<RouteComponentProps> = ({history}) => {
 
     useEffect(() => {
         if (bikes?.length && bikes?.length > 0) {
+            setPage(1);
             fetchData();
             log(bikes);
         }
@@ -61,7 +61,7 @@ const BikeList: React.FC<RouteComponentProps> = ({history}) => {
 
     useEffect(() => {
         if (bikes && filter) {
-            if (filter === "0") {
+            if (filter === "0" || filter === null) {
                 setVisibleBikes(bikes);
             } else {
                 setVisibleBikes(bikes.filter(each => each.price <= parseInt(filter)));
@@ -90,7 +90,7 @@ const BikeList: React.FC<RouteComponentProps> = ({history}) => {
 
     async function searchNext($event: CustomEvent<void>) {
         //TODO: set timeout to observe fetchData behaviour
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(resolve => setTimeout(resolve, 1000));
         fetchData();
         log("pagination");
         ($event.target as HTMLIonInfiniteScrollElement).complete();
@@ -125,9 +125,10 @@ const BikeList: React.FC<RouteComponentProps> = ({history}) => {
                     <IonList>
                         {Array.from(visibleBikes)
                             .filter(each => {
-                                if (filter !== undefined && filter !== "0")
-                                    return each.price <= parseInt(filter) && each._id !== undefined;
-                                return each._id !== undefined;
+                                if (each._id === undefined) {
+                                    return false;
+                                }
+                                return filter === undefined || filter === "0" || each.price <= parseInt(filter);
                             })
                             .map(({_id, name, condition, warranty, price}) =>
                                 <Bike key={_id} _id={_id} name={name} condition={condition} warranty={warranty}

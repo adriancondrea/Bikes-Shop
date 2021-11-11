@@ -35,7 +35,6 @@ export const getBikes: (token: string) => Promise<BikeProps[]> = token => {
     } catch (error) {
         throw error;
     }
-    // return withLogs(axios.get(bikeUrl, authConfig(token)), 'getBikes');
 }
 
 export const createBike: (token: string, bike: BikeProps) => Promise<BikeProps[]> = (token, bike) => {
@@ -93,7 +92,21 @@ export const updateBike: (token: string, bike: BikeProps) => Promise<BikeProps[]
 }
 
 export const deleteBike: (token: string, bike: BikeProps) => Promise<BikeProps[]> = (token, bike) => {
-    return withLogs(axios.delete(`${bikeUrl}/${bike._id}`, authConfig(token)), 'deleteBike');
+    const result = axios.delete(`${bikeUrl}/${bike._id}`, authConfig(token));
+    result.then(async result => {
+        const item: any = result.data;
+        await Storage.remove({key: item._id!})
+            .catch(err => {
+                if (err.response) {
+                    alert('client received an error response (5xx, 4xx)');
+                } else if (err.request) {
+                    alert('client never received a response, or request never left');
+                } else {
+                    alert('anything else');
+                }
+            })
+    });
+    return withLogs(result, 'deleteBike');
 }
 
 const equals = (bike1: any, bike2: any) => {
@@ -117,6 +130,12 @@ export const syncData: (token: string) => Promise<BikeProps[]> = async token => 
                     } else if (bikeOnServer === undefined) { //create
                         axios.post(`${bikeUrl}`, JSON.parse(bikeLocal.value!), authConfig(token));
                     } // nothing changed
+                }
+            }
+            for (const bike of result.data){
+                const localBike = keys.find((id => id === bike._id));
+                if(localBike === undefined){
+                    axios.delete(`${bikeUrl}/${bike._id}`, authConfig(token));
                 }
             }
         }).catch(err => {

@@ -12,6 +12,7 @@
     "@capacitor/storage": "^1.2.3",
     "@ionic/react": "^5.5.0",
     "@ionic/react-router": "^5.5.0",
+    "@react-native-cookies/cookies": "^6.0.11",
     "@testing-library/jest-dom": "^5.11.9",
     "@testing-library/react": "^11.2.5",
     "@testing-library/user-event": "^12.6.3",
@@ -21,6 +22,7 @@
     "@types/react-dom": "^16.9.10",
     "@types/react-router": "^5.1.11",
     "@types/react-router-dom": "^5.1.7",
+    "axios": "^0.20.0",
     "ionicons": "^5.4.0",
     "moment": "^2.29.1",
     "react": "^17.0.1",
@@ -41,8 +43,7 @@
     "workbox-range-requests": "^5.1.4",
     "workbox-routing": "^5.1.4",
     "workbox-strategies": "^5.1.4",
-    "workbox-streams": "^5.1.4",
-    "axios": "^0.20.0"
+    "workbox-streams": "^5.1.4"
   },
   "scripts": {
     "start": "react-scripts start",

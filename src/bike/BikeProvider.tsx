@@ -113,6 +113,24 @@ export const BikeProvider: React.FC<BikeProviderProps> = ({children}) => {
         const saveBike = useCallback<SaveBikeFn>(saveBikeCallback, [token]);
         const removeBike = useCallback<DeleteBikeFn>(deleteBikeCallback, [token]);
 
+        const value = {
+            bikes,
+            fetching,
+            fetchingError,
+            saving,
+            savingError,
+            saveBike: saveBike,
+            deleting,
+            deletingError,
+            deleteBike: removeBike
+        };
+        log('returns');
+        return (
+            <BikeContext.Provider value={value}>
+                {children}
+            </BikeContext.Provider>
+        );
+
         async function deleteBikeCallback(bike: BikeProps) {
             try {
                 if (navigator.onLine) {
@@ -134,24 +152,6 @@ export const BikeProvider: React.FC<BikeProviderProps> = ({children}) => {
                 dispatch({type: DELETE_BIKE_FAILED, payload: {error}});
             }
         }
-
-        const value = {
-            bikes,
-            fetching,
-            fetchingError,
-            saving,
-            savingError,
-            saveBike: saveBike,
-            deleting,
-            deletingError,
-            deleteBike: removeBike
-        };
-        log('returns');
-        return (
-            <BikeContext.Provider value={value}>
-                {children}
-            </BikeContext.Provider>
-        );
 
         function networkEffect() {
             console.log("network effect");

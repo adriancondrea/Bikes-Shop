@@ -31,21 +31,22 @@ import {Network} from "@capacitor/network";
 import {isNumber} from "util";
 
 const log = getLogger('BikeList');
-const offset = 5;
+
+const offset = 3;
 
 const BikeList: React.FC<RouteComponentProps> = ({history}) => {
     const {logout} = useContext(AuthContext);
     const {bikes, fetching, fetchingError} = useContext(BikeContext);
+    const {savedOffline, setSavedOffline} = useContext(BikeContext);
 
     const [disableInfiniteScroll, setDisableInfiniteScroll] = useState<boolean>(false);
     const [visibleBikes, setVisibleBikes] = useState<BikeProps[] | undefined>([]);
-    const [page, setPage] = useState(offset);
+    const [page, setPage] = useState(0);
     const [filter, setFilter] = useState<string | undefined>(undefined);
     const [search, setSearch] = useState<string>("");
-
-    const {savedOffline, setSavedOffline} = useContext(BikeContext);
-
     const [networkStatus, setNetworkStatus] = useState<boolean>(true);
+
+    //TODO: extract to custom hook with unmount function in order to avoid memory leaks
     Network.getStatus().then(status => setNetworkStatus(status.connected));
     Network.addListener('networkStatusChange', (status) => {
         setNetworkStatus(status.connected);
@@ -53,7 +54,6 @@ const BikeList: React.FC<RouteComponentProps> = ({history}) => {
 
     useEffect(() => {
         if (bikes?.length && bikes?.length > 0) {
-            setPage(offset);
             fetchData();
             log(bikes);
         }
@@ -61,7 +61,7 @@ const BikeList: React.FC<RouteComponentProps> = ({history}) => {
 
     useEffect(() => {
         if (bikes && filter) {
-            if (filter === "0" || !isNumber(filter)) {
+            if (filter === "0") {
                 setVisibleBikes(bikes);
             } else {
                 setVisibleBikes(bikes.filter(each => each.price <= parseInt(filter)));
@@ -79,11 +79,10 @@ const BikeList: React.FC<RouteComponentProps> = ({history}) => {
     }, [search]);
 
     function fetchData() {
-        setVisibleBikes(bikes?.slice(0, page + offset));
-        setPage(page + offset);
-        if (bikes && page > bikes?.length) {
+        setVisibleBikes(bikes?.slice(0, page * offset));
+        setPage(page + 1);
+        if (bikes && page * offset >= bikes?.length) {
             setDisableInfiniteScroll(true);
-            setPage(bikes.length);
         } else {
             setDisableInfiniteScroll(false);
         }

@@ -45,8 +45,9 @@ const BikeEdit: React.FC<BikeEditProps> = ({history, match}) => {
     const [condition, setCondition] = useState('');
     const [warranty, setWarranty] = useState(false);
     const [price, setPrice] = useState(0);
-    const [bike, setBike] = useState<BikeProps>();
-    const {photos, takePhoto, deletePhoto} = usePhotoGallery();
+    const initialBike = bikes?.find(it => it._id === match.params.id);
+    const [bike, setBike] = useState<BikeProps>(initialBike!);
+    const {photos, takePhoto, deletePhoto} = usePhotoGallery(bike?._id);
     const [photoToDelete, setPhotoToDelete] = useState<Photo>();
     const myLocation = useMyLocation();
     const [lat, setLat] = useState(myLocation.position?.coords.latitude);
@@ -54,9 +55,6 @@ const BikeEdit: React.FC<BikeEditProps> = ({history, match}) => {
 
     useEffect(() => {
         log('useEffect');
-        const routeId = match.params.id || '';
-        const bike = bikes?.find(it => it._id === routeId);
-        setBike(bike);
         if (bike) {
             setName(bike.name);
             setCondition(bike.condition);

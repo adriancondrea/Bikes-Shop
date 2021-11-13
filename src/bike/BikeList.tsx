@@ -159,6 +159,7 @@ const BikeList: React.FC<RouteComponentProps> = ({history}) => {
         );
 
         function handleLogout() {
+            bikes?.splice(0);
             log("logout");
             logout?.();
         }

@@ -4,8 +4,8 @@ import {getLogger} from '../core';
 import {BikeProps} from './BikeProps';
 import {createBike, deleteBike, getBikes, newWebSocket, syncData, updateBike} from './bikeApi';
 import {AuthContext} from "../auth";
-import {Network} from "@capacitor/core";
-import {Storage} from "@capacitor/core";
+import {Network, Storage} from "@capacitor/core";
+import {useMyLocation} from "../hooks/useMyLocation";
 
 const log = getLogger('BikeProvider');
 
@@ -98,6 +98,9 @@ interface BikeProviderProps {
 }
 
 export const BikeProvider: React.FC<BikeProviderProps> = ({children}) => {
+        const myLocation = useMyLocation();
+        const {latitude: lat, longitude: lng} = myLocation.position?.coords || {}
+
         const {token} = useContext(AuthContext);
         const [state, dispatch] = useReducer(reducer, initialState);
         const {bikes, fetching, fetchingError, saving, savingError, deleting, deletingError} = state;

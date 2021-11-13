@@ -49,7 +49,8 @@ const BikeEdit: React.FC<BikeEditProps> = ({history, match}) => {
     const {photos, takePhoto, deletePhoto} = usePhotoGallery();
     const [photoToDelete, setPhotoToDelete] = useState<Photo>();
     const myLocation = useMyLocation();
-    const { latitude: lat, longitude: lng } = myLocation.position?.coords || {}
+    const [lat, setLat] = useState(myLocation.position?.coords.latitude);
+    const [lng, setLng] = useState(myLocation.position?.coords.latitude);
 
     useEffect(() => {
         log('useEffect');
@@ -61,25 +62,31 @@ const BikeEdit: React.FC<BikeEditProps> = ({history, match}) => {
             setCondition(bike.condition);
             setWarranty(bike.warranty);
             setPrice(bike.price);
+            setLat(bike.lat);
+            setLng(bike.lng);
         }
     }, [match.params.id, bikes]);
     const handleSave = () => {
-        const editedBike = bike ? {...bike, name, condition, warranty, price} : {
+        const editedBike = bike ? {...bike, name, condition, warranty, price, lat, lng} : {
             name: name,
             condition: condition,
             warranty: warranty,
-            price: price
+            price: price,
+            lat: lat,
+            lng: lng
         };
         saveBike && saveBike(editedBike).then(() => history.goBack());
     };
     log('render');
 
     let handleDelete = () => {
-        const deletedBike = bike ? {...bike, name, condition, warranty, price} : {
+        const deletedBike = bike ? {...bike, name, condition, warranty, price, lat, lng} : {
             name: name,
             condition: condition,
             warranty: warranty,
-            price: price
+            price: price,
+            lat: lat,
+            lng: lng
         };
         deleteBike && deleteBike(deletedBike).then(() => history.goBack());
     };
@@ -141,13 +148,16 @@ const BikeEdit: React.FC<BikeEditProps> = ({history, match}) => {
                 {savingError && (
                     <div>{savingError.message || 'Failed to save bike'}</div>
                 )}
-                {lat && lng &&
-                <MyMap
-                    lat={lat}
-                    lng={lng}
-                    onMapClick={log('onMap')}
-                    onMarkerClick={log('onMarker')}
-                />}
+                {
+                    <MyMap
+                        lat={lat}
+                        lng={lng}
+                        onMapClick={(e: any) => {
+                            setLat(e.latLng.lat());
+                            setLng(e.latLng.lng());
+                        }}
+                        onMarkerClick={log('onMarker')}
+                    />}
                 {DeleteButton}
                 <IonFab vertical="bottom" horizontal="start" slot="fixed">
                     <IonFabButton onClick={() => takePhoto()}>

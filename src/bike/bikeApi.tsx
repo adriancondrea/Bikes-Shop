@@ -18,7 +18,9 @@ export const getBikes: (token: string) => Promise<BikeProps[]> = token => {
                         name: each.name,
                         condition: each.condition,
                         warranty: each.warranty,
-                        price: each.price
+                        price: each.price,
+                        lat: each.lat,
+                        lng: each.lng
                     })
                 })
             }
@@ -48,7 +50,9 @@ export const createBike: (token: string, bike: BikeProps) => Promise<BikeProps[]
                 name: item.name,
                 condition: item.condition,
                 warranty: item.warranty,
-                price: item.price
+                price: item.price,
+                lat: item.lat,
+                lng: item.lng
             })
         })
     }).catch(err => {
@@ -132,9 +136,9 @@ export const syncData: (token: string) => Promise<BikeProps[]> = async token => 
                     } // nothing changed
                 }
             }
-            for (const bike of result.data){
+            for (const bike of result.data) {
                 const localBike = keys.find((id => id === bike._id));
-                if(localBike === undefined){
+                if (localBike === undefined) {
                     axios.delete(`${bikeUrl}/${bike._id}`, authConfig(token));
                 }
             }

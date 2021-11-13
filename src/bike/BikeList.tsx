@@ -1,6 +1,7 @@
 import React, {useContext, useEffect, useState} from 'react';
 import {RouteComponentProps} from 'react-router';
 import {
+    createAnimation,
     IonButton,
     IonContent,
     IonFab,
@@ -92,6 +93,39 @@ const BikeList: React.FC<RouteComponentProps> = ({history}) => {
             ($event.target as HTMLIonInfiniteScrollElement).complete();
         }
 
+        function startAnimation() {
+            if (animation) {
+                animation.play();
+            }
+        }
+
+        function getAnimation() {
+            const addButton = document.querySelector('.addButton');
+            if (addButton) {
+                const animation = createAnimation()
+                    .addElement(addButton)
+                    .duration(1000)
+                    .direction('alternate')
+                    .iterations(Infinity)
+                    .keyframes([
+                        {offset: 0, transform: 'scale(3)', opacity: '1'},
+                        {
+                            offset: 1, transform: 'scale(1.5)', opacity: '0.5'
+                        }
+                    ]);
+                return animation
+            }
+            return undefined;
+        }
+
+        let animation = getAnimation();
+
+        function stopAnimation() {
+            if (animation) {
+                animation.stop();
+            }
+        }
+
         return (
             <IonPage>
                 <IonHeader>
@@ -141,7 +175,9 @@ const BikeList: React.FC<RouteComponentProps> = ({history}) => {
                         <div>{fetchingError.message || 'Failed to fetch bikes'}</div>
                     )}
                     <IonFab vertical="bottom" horizontal="end" slot="fixed">
-                        <IonFabButton onClick={() => history.push('/bike')}>
+                        <IonFabButton className={'addButton'} onClick={() => history.push('/bike')}
+                                      onMouseEnter={() => startAnimation()}
+                                      onMouseLeave={() => stopAnimation()}>
                             <IonIcon icon={add}/>
                         </IonFabButton>
                     </IonFab>

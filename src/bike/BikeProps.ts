@@ -4,4 +4,6 @@ export interface BikeProps {
   condition: string;
   warranty: boolean;
   price: number;
+  lat?: number;
+  lng?: number;
 }

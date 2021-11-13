@@ -2,7 +2,6 @@ import React, {useContext, useEffect, useState} from 'react';
 import {RouteComponentProps} from 'react-router';
 import {
     createAnimation,
-    IonButton,
     IonContent,
     IonFab,
     IonFabButton,
@@ -26,16 +25,15 @@ import {add} from 'ionicons/icons';
 import {getLogger} from '../core';
 import {BikeContext} from './BikeProvider';
 import Bike from "./Bike";
-import {AuthContext} from "../auth";
 import {BikeProps} from "./BikeProps";
 import {useNetwork} from "../hooks/useNetwork";
+import {LogoutButton} from "../animation/LogoutButton";
 
 const log = getLogger('BikeList');
 
 const offset = 3;
 
 const BikeList: React.FC<RouteComponentProps> = ({history}) => {
-        const {logout} = useContext(AuthContext);
         const {bikes, fetching, fetchingError} = useContext(BikeContext);
         const {savedOffline, setSavedOffline} = useContext(BikeContext);
         const {networkStatus} = useNetwork();
@@ -136,7 +134,7 @@ const BikeList: React.FC<RouteComponentProps> = ({history}) => {
                                     <IonLabel
                                         color={networkStatus ? "success" : "danger"}>{networkStatus ? "Bikes Shop - Online" : "Bikes Shop - Offline"}</IonLabel>
                                 </IonTitle>
-                                <IonButton onClick={handleLogout}>Logout</IonButton>
+                                <LogoutButton/>
                             </IonRow>
                             <IonRow>
                                 <IonSearchbar style={{width: '70%'}} placeholder="Search by name" value={search}
@@ -188,12 +186,6 @@ const BikeList: React.FC<RouteComponentProps> = ({history}) => {
                 </IonContent>
             </IonPage>
         );
-
-        function handleLogout() {
-            bikes?.splice(0);
-            log("logout");
-            logout?.();
-        }
     }
 ;
 

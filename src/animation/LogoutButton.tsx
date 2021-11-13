@@ -1,5 +1,5 @@
 import React, {useContext, useState} from 'react';
-import {createAnimation, IonButton, IonCol, IonGrid, IonModal, IonRow} from '@ionic/react';
+import {createAnimation, IonButton, IonCol, IonGrid, IonModal, IonRow, IonTitle} from '@ionic/react';
 import {BikeContext} from "../bike/BikeProvider";
 import {AuthContext} from "../auth";
 
@@ -40,7 +40,7 @@ export const LogoutButton: React.FC = () => {
     return (
         <>
             <IonModal isOpen={showModal} enterAnimation={enterAnimation} leaveAnimation={leaveAnimation}>
-                <div className="ion-text-center">Are you sure you want to log out?</div>
+                <IonTitle className="ion-align-self-center">Are you sure you want to log out?</IonTitle>
                 <IonGrid>
                     <IonRow>
                         <IonCol>

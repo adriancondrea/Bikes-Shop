@@ -1,7 +1,7 @@
 import axios from 'axios';
 import {authConfig, baseUrl, getLogger, withLogs} from '../core';
 import {BikeProps} from './BikeProps';
-import {Storage} from '@capacitor/storage';
+import {Storage} from '@capacitor/core';
 
 const bikeUrl = `http://${baseUrl}/api/bike`;
 

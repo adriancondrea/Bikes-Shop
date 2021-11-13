@@ -27,7 +27,7 @@ import {BikeContext} from './BikeProvider';
 import Bike from "./Bike";
 import {AuthContext} from "../auth";
 import {BikeProps} from "./BikeProps";
-import {Network} from "@capacitor/network";
+import {useNetwork} from "../hooks/useNetwork";
 
 const log = getLogger('BikeList');
 
@@ -37,18 +37,13 @@ const BikeList: React.FC<RouteComponentProps> = ({history}) => {
         const {logout} = useContext(AuthContext);
         const {bikes, fetching, fetchingError} = useContext(BikeContext);
         const {savedOffline, setSavedOffline} = useContext(BikeContext);
+        const {networkStatus} = useNetwork();
 
         const [disableInfiniteScroll, setDisableInfiniteScroll] = useState<boolean>(false);
         const [visibleBikes, setVisibleBikes] = useState<BikeProps[] | undefined>([]);
         const [elementsPerPage, setElementsPerPage] = useState(0);
         const [filter, setFilter] = useState<string | undefined>(undefined);
         const [search, setSearch] = useState<string>("");
-        const [networkStatus, setNetworkStatus] = useState<boolean>(true);
-
-        Network.getStatus().then(status => setNetworkStatus(status.connected));
-        Network.addListener('networkStatusChange', (status) => {
-            setNetworkStatus(status.connected);
-        })
 
         useEffect(() => {
             if (bikes?.length && bikes?.length > 0) {
@@ -126,7 +121,7 @@ const BikeList: React.FC<RouteComponentProps> = ({history}) => {
                         <IonList>
                             {Array.from(visibleBikes)
                                 .filter(each => {
-                                    if(filter !== undefined && filter !== "0")
+                                    if (filter !== undefined && filter !== "0")
                                         return each.price <= parseInt(filter) && each._id != undefined;
                                     return each._id != undefined;
                                 })

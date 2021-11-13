@@ -1,20 +1,25 @@
 import React, {useContext, useEffect, useState} from 'react';
 import {
+    IonActionSheet,
     IonBackButton,
     IonButton,
     IonButtons,
     IonCheckbox,
+    IonCol,
     IonContent,
     IonFab,
     IonFabButton,
+    IonGrid,
     IonHeader,
     IonIcon,
+    IonImg,
     IonInput,
     IonItem,
     IonLabel,
     IonList,
     IonLoading,
     IonPage,
+    IonRow,
     IonTitle,
     IonToolbar
 } from '@ionic/react';
@@ -22,7 +27,8 @@ import {getLogger} from '../core';
 import {BikeContext} from './BikeProvider';
 import {RouteComponentProps} from 'react-router';
 import {BikeProps} from './BikeProps';
-import {remove} from "ionicons/icons";
+import {camera, close, remove, trash} from "ionicons/icons";
+import {Photo, usePhotoGallery} from "../hooks/usePhotoGallery";
 
 const log = getLogger('BikeEdit');
 
@@ -38,6 +44,8 @@ const BikeEdit: React.FC<BikeEditProps> = ({history, match}) => {
     const [warranty, setWarranty] = useState(false);
     const [price, setPrice] = useState(0);
     const [bike, setBike] = useState<BikeProps>();
+    const {photos, takePhoto, deletePhoto} = usePhotoGallery();
+    const [photoToDelete, setPhotoToDelete] = useState<Photo>();
 
     useEffect(() => {
         log('useEffect');
@@ -116,11 +124,44 @@ const BikeEdit: React.FC<BikeEditProps> = ({history, match}) => {
                                   onIonChange={e => setPrice(Number(e.detail.value) || 0)}/>
                     </IonItem>
                 </IonList>
+                <IonGrid>
+                    <IonRow>
+                        {photos.map((photo, index) => (
+                            <IonCol size="6" key={index}>
+                                <IonImg onClick={() => setPhotoToDelete(photo)} src={photo.webviewPath}/>
+                            </IonCol>
+                        ))}
+                    </IonRow>
+                </IonGrid>
                 <IonLoading isOpen={saving}/>
                 {savingError && (
                     <div>{savingError.message || 'Failed to save bike'}</div>
                 )}
                 {DeleteButton}
+                <IonFab vertical="bottom" horizontal="start" slot="fixed">
+                    <IonFabButton onClick={() => takePhoto()}>
+                        <IonIcon icon={camera}/>
+                    </IonFabButton>
+                </IonFab>
+                <IonActionSheet
+                    isOpen={!!photoToDelete}
+                    buttons={[{
+                        text: 'Delete',
+                        role: 'destructive',
+                        icon: trash,
+                        handler: () => {
+                            if (photoToDelete) {
+                                deletePhoto(photoToDelete);
+                                setPhotoToDelete(undefined);
+                            }
+                        }
+                    }, {
+                        text: 'Cancel',
+                        icon: close,
+                        role: 'cancel'
+                    }]}
+                    onDidDismiss={() => setPhotoToDelete(undefined)}
+                />
             </IonContent>
         </IonPage>
     );

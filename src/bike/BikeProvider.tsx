@@ -4,8 +4,8 @@ import {getLogger} from '../core';
 import {BikeProps} from './BikeProps';
 import {createBike, deleteBike, getBikes, newWebSocket, syncData, updateBike} from './bikeApi';
 import {AuthContext} from "../auth";
-import {Network} from "@capacitor/network";
-import {Storage} from "@capacitor/storage";
+import {Network} from "@capacitor/core";
+import {Storage} from "@capacitor/core";
 
 const log = getLogger('BikeProvider');
 

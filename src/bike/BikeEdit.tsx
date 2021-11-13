@@ -50,7 +50,7 @@ const BikeEdit: React.FC<BikeEditProps> = ({history, match}) => {
     const [photoToDelete, setPhotoToDelete] = useState<Photo>();
     const myLocation = useMyLocation();
     const [lat, setLat] = useState(myLocation.position?.coords.latitude);
-    const [lng, setLng] = useState(myLocation.position?.coords.latitude);
+    const [lng, setLng] = useState(myLocation.position?.coords.longitude);
 
     useEffect(() => {
         log('useEffect');

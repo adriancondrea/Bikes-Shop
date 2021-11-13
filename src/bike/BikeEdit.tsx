@@ -29,6 +29,8 @@ import {RouteComponentProps} from 'react-router';
 import {BikeProps} from './BikeProps';
 import {camera, close, remove, trash} from "ionicons/icons";
 import {Photo, usePhotoGallery} from "../hooks/usePhotoGallery";
+import {useMyLocation} from "../hooks/useMyLocation";
+import {MyMap} from "../components/MyMap";
 
 const log = getLogger('BikeEdit');
 
@@ -46,6 +48,8 @@ const BikeEdit: React.FC<BikeEditProps> = ({history, match}) => {
     const [bike, setBike] = useState<BikeProps>();
     const {photos, takePhoto, deletePhoto} = usePhotoGallery();
     const [photoToDelete, setPhotoToDelete] = useState<Photo>();
+    const myLocation = useMyLocation();
+    const { latitude: lat, longitude: lng } = myLocation.position?.coords || {}
 
     useEffect(() => {
         log('useEffect');
@@ -137,6 +141,13 @@ const BikeEdit: React.FC<BikeEditProps> = ({history, match}) => {
                 {savingError && (
                     <div>{savingError.message || 'Failed to save bike'}</div>
                 )}
+                {lat && lng &&
+                <MyMap
+                    lat={lat}
+                    lng={lng}
+                    onMapClick={log('onMap')}
+                    onMarkerClick={log('onMarker')}
+                />}
                 {DeleteButton}
                 <IonFab vertical="bottom" horizontal="start" slot="fixed">
                     <IonFabButton onClick={() => takePhoto()}>
